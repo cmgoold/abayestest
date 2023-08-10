@@ -1,0 +1,7 @@
+**/.*.swp
+**/__pycache__/
+**/.DS_Store
+**/*.pyc
+
+# cache location
+.miniab/
