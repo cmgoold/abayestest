@@ -9,4 +9,5 @@ https://github.com/stan-dev/cmdstanpy
 ), and [`jinja2`](
 https://github.com/pallets/jinja/
 ) is used
-in the backend to construct the Stan model files.
+as a backend templating engine
+to construct the Stan model files dynamically.

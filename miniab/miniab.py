@@ -37,6 +37,9 @@ class MiniAb(object):
         self._priors = priors
         self.model : CmdStanModel = self.compile()
 
+    likelihood = property(lambda self: self._likelihood)
+    priors = property(lambda self: self._priors)
+
     def fit(data: Union[Dict[str, DataTypes], pd.DataFrame], **cmdstanpy_kwargs) -> MiniAb:
         fit = self.model.sample(data=data, **kwargs)
         return self
@@ -50,9 +53,9 @@ class MiniAb(object):
 
     def _render_model(self) -> str:
         try:
-            template = ENVIRONMENT.get_template(self.likelihood.lower())
+            template = ENVIRONMENT.get_template(self._likelihood.lower())
         except TemplateNotFound:
-            raise ValueError(f"Cannot build model for likelihood {self.likelihood}.\n"
+            raise ValueError(f"Cannot build model for likelihood {self._likelihood}.\n"
                              f"Likelihoods available are {LIKELIHOODS}.")
 
         rendered = template.render(priors=self.priors)
