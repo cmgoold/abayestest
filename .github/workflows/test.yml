@@ -10,12 +10,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: Install Python3.10
+      - name: install Python3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: install-requirements
+      - name: install cmdstan
+        run: |
+          install_cmdstan -v 2.29.2 --progress
+
+      - name: install requirements
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements-dev.txt
