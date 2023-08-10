@@ -21,7 +21,7 @@ jobs:
           python3 -m pip install .
 
       - name: run-tests
-        run: coverage run -m pytest test
+        runs: coverage run -m pytest test
           coverage xml
           coverage html
           genbadge coverage -i coverage.xml
