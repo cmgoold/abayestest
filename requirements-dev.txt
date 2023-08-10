@@ -1,0 +1,7 @@
+-r requirements.txt
+pytest==7.4.0
+pytest-cov==4.1.0
+defusedxml==0.7.1
+pre-commit >= 3.3.3
+genbadge==1.1.0
+
