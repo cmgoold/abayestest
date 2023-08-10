@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Optional
 from jinja2 import Environment, PackageLoader
 from jinja2.exceptions import TemplateNotFound
 import os
@@ -32,10 +33,10 @@ class MiniAb(object):
     -------
     """
 
-    def __init__(self, likelihood: str = "normal", priors: Priors = DEFAULT_PRIORS) -> None:
+    def __init__(self, likelihood: str = "normal", priors: Priors = DEFAULT_PRIORS, force_compile: Optiona[bool] = None) -> None:
         self._likelihood = likelihood
         self._priors = priors
-        self.model : CmdStanModel = self.compile()
+        self.model : CmdStanModel = self.compile(force=force_compile)
 
     likelihood = property(lambda self: self._likelihood)
     priors = property(lambda self: self._priors)
@@ -44,14 +45,14 @@ class MiniAb(object):
         fit = self.model.sample(data=data, **kwargs)
         return self
 
-    def compile(self) -> CmdStanModel:
-        if self._hash() in os.listdir(CACHE_LOCATION):
-            return csp.CmdStanModel(exe_file=str(CACHE_LOCATION) + "/" + self._hash())
-        else:
+    def compile(self, force: bool = False) -> CmdStanModel:
+        if force or self._hash() not in os.lisdir(CACHE_LOCATION):
             stan_file = str(CACHE_LOCATION) + "/" + self._hash() + ".stan"
             with open(stan_file, "w") as f:
                 f.write(self._render_model())
             return csp.CmdStanModel(stan_file=stan_file)
+        else:
+            return csp.CmdStanModel(exe_file=str(CACHE_LOCATION) + "/" + self._hash())
 
     def _render_model(self) -> str:
         try:
