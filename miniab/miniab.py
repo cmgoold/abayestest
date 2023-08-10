@@ -48,7 +48,9 @@ class MiniAb(object):
         if self._hash() in os.listdir(CACHE_LOCATION):
             return csp.CmdStanModel(exe_file=str(CACHE_LOCATION) + "/" + self._hash())
         else:
-            stan_file = open(str(CACHE_LOCATION) + "/" + self._hash(), "w").write(self._render_model())
+            stan_file = str(CACHE_LOCATION) + "/" + self._hash() + ".stan"
+            with open(stan_file, "w") as f:
+                f.write(self._render_model())
             return csp.CmdStanModel(stan_file=stan_file)
 
     def _render_model(self) -> str:
