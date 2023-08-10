@@ -72,12 +72,29 @@ ab.fit(data=(y1, y2))
 The model will run in Stan and return `self`.
 You can access the `cmdstanpy.CmdStanMCMC` object
 itself using `ab.cmdstan_mcmc`. To take a quick
-look at the results, run `ab.summary`:
+look at the results, run `ab.summary`, which returns
+a summary Pandas `DataFrame` straight from [`Arviz`](
+https://github.com/arviz-devs/arviz
+):
 
 ```
+             mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk ess_tail   r_hat
+mu[0]      -0.000  0.006  -0.011    0.012      0.000    0.000    1871.0     909.0   1.00
+mu[1]       1.009  0.032   0.948    1.067      0.001    0.001    1031.0     903.0   1.00
+sigma[0]    0.197  0.004   0.189    0.205      0.000    0.000     922.0     766.0   1.00
+sigma[1]    1.021  0.023   0.979    1.063      0.001    0.001     956.0     820.0   1.01
+mu_diff    -1.010  0.033  -1.071   -0.950      0.001    0.001    1035.0     910.0   1.01
+sigma_diff -0.824  0.023  -0.868   -0.784      0.001    0.001    1026.0     861.0   1.01
 ```
 
-We can inspect the likelihood distribution and priors via `MiniAb`'s
+`miniab` always uses the terms `mu` and `sigma` to refer to 
+vectors of group-specific means and standard deviations.
+The additional variables `mu_diff` and `sigma_diff` give
+the difference in posterior distributions between groups 1 and 2
+(i.e. `mu[0] - mu[1]` using Python's zero-indexing).
+
+## Under the hood 
+We can in inspect the likelihood distribution and priors via `MiniAb`'s
 properties:
 
 ```python
