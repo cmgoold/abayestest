@@ -53,7 +53,7 @@ class MiniAb(object):
 
     def _render_model(self) -> str:
         try:
-            template = ENVIRONMENT.get_template(self._likelihood.lower())
+            template = ENVIRONMENT.get_template("distributions/" + self._likelihood.lower() + ".stan")
         except TemplateNotFound:
             raise ValueError(f"Cannot build model for likelihood {self._likelihood}.\n"
                              f"Likelihoods available are {LIKELIHOODS}.")
