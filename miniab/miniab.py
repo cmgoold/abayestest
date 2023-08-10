@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import cmdstanpy as csp
 
+from .templates.distributions import LIKELIHOODS
+
 ROOT = Path(__file__).parent.parent.resolve()
 CACHE_LOCATION =  ROOT / ".miniab"
 
@@ -13,8 +15,6 @@ if not os.path.exists(CACHE_LOCATION):
     os.mkdir(CACHE_LOCATION)
 
 DEFAULT_PRIORS = {"mu": "normal(0, 1)", "sigma": "normal(0, 1)"}
-
-LIKELIHOODS = [dist.replace(".stan", "") for dist in os.listdir(str(Path(__file__).parent.resolve()) + "/templates/distributions") if dist != "base.stan"]
 
 ENVIRONMENT = Environment(loader=PackageLoader("miniab"))
 

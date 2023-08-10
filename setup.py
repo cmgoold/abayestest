@@ -17,5 +17,11 @@ if __name__ == "__main__":
         desription="Bayesian AB testing with Stan and Python.",
         packages=find_packages(),
         install_requires=requirements,
+        package_data={
+            "miniab": [
+                "templates/*.stan",
+                "distributions/*.stan",
+            ]
+        },
         python_requires=">=3.10",
 )
