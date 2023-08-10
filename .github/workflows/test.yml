@@ -16,12 +16,12 @@ jobs:
           python-version: 3.10
 
       - name: install-requirements
-        runs: python3 -m pip install --upgrade pip
+        run: python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements-dev.txt
           python3 -m pip install .
 
       - name: run-tests
-        runs: coverage run -m pytest test
+        run: coverage run -m pytest test
           coverage xml
           coverage html
           genbadge coverage -i coverage.xml
