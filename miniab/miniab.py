@@ -64,9 +64,9 @@ class MiniAb(object):
         stan_file = self._hash() + ".stan"
         if force or stan_file not in os.listdir(CACHE_LOCATION):
             stan_file_path = str(CACHE_LOCATION) + "/" + stan_file
-            with open(stan_file, "w") as f:
+            with open(stan_file_path, "w") as f:
                 f.write(self._render_model())
-            return csp.CmdStanModel(stan_file=stan_file)
+            return csp.CmdStanModel(stan_file=stan_file_path)
         else:
             return csp.CmdStanModel(exe_file=str(CACHE_LOCATION) + "/" + self._hash())
 
@@ -93,7 +93,11 @@ class MiniAb(object):
     @cached_property
     def summary(self) -> pd.DataFrame:
         self._check_fit_exists()
-        variables = ["mu", "sigma", "mu_diff", "sigma_diff"]
+        variables = ["mu", "mu_diff"]
+        if self._likelihood == "normal":
+            variables += ["sigma", "sigma_diff"]
+        if self._likelihood == "bernoulli":
+            variables += ["mu_prob", "mu_prob_diff"]
         inference_data = self.inference_data
         return az.summary(inference_data, var_names=variables)
 

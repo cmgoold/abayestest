@@ -14,7 +14,7 @@ https://github.com/pallets/jinja/
 as a backend templating engine
 to construct the Stan model files dynamically.
 
-## Installtion
+## Installation
 
 To install, use:
 
@@ -133,19 +133,27 @@ data {
   vector[N] y;
 }
 
-transformed data {}
+transformed data {
+  /* data transformations */
+}
 
 parameters {
+  
   /* raw model parameters */
   vector[2] mu;
-  vector<lower=0>[2] sigma;}
+  vector<lower=0>[2] sigma;
+
+}
 
 transformed parameters {
+  
   /* parameter transformations */
   // nb: no change of variables adjustments are made
   // to these parameters
   vector[N] mu_j = mu[j];
-  vector<lower=0>[N] sigma_j = sigma[j];}
+  vector<lower=0>[N] sigma_j = sigma[j];
+
+}
 
 model {
 
