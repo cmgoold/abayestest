@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 from jinja2 import Environment, PackageLoader
 from jinja2.exceptions import TemplateNotFound
-import os
 from pathlib import Path
 from functools import cached_property
+from hashlib import md5
+import json
+import os
 
 import arviz as az
 import cmdstanpy as csp
@@ -55,12 +57,13 @@ class MiniAb(object):
         y = np.hstack([y1, y2])
         _j = [1] * len(y1) + [2] * len(y2)
         clean_data = {"N": len(y1) + len(y2), "j": _j, "y": y}
-        self._fit = self.model.sample(data=clean_data, **cmdstanpy_kwargs)
+        self._fit = self.model.sample(data=clean_data, **cmdstanpy_kwargs, show_console=True)
         return self
 
     def compile(self, force: bool = False) -> CmdStanModel:
-        if force or self._hash() not in os.listdir(CACHE_LOCATION):
-            stan_file = str(CACHE_LOCATION) + "/" + self._hash() + ".stan"
+        stan_file = self._hash() + ".stan"
+        if force or stan_file not in os.listdir(CACHE_LOCATION):
+            stan_file_path = str(CACHE_LOCATION) + "/" + stan_file
             with open(stan_file, "w") as f:
                 f.write(self._render_model())
             return csp.CmdStanModel(stan_file=stan_file)
@@ -95,7 +98,7 @@ class MiniAb(object):
         return az.summary(inference_data, var_names=variables)
 
     def _hash(self):
-        return str(1234)
+        return md5(json.dumps(tuple((self.priors, self.likelihood))).encode("utf-8")).hexdigest()
 
     def _check_fit_exists(self) -> Union[None, Exception]:
         if self._fit is None:
