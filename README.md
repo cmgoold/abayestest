@@ -1,9 +1,9 @@
 ![build](https://github.com/cmgoold/miniab/actions/workflows/test.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# miniab
+# ABayes
 
-`miniab` is a lightweight Python package for performing Bayesian AB testing.
+ABayes is a small Python package for performing Bayesian AB testing.
 Computations are run using [Stan](
 https://mc-stan.org
 ) via [`cmdstanpy`](
@@ -19,11 +19,11 @@ to construct the Stan model files dynamically.
 To install, use:
 
 ```bash
-python3.10 -m pip install git+ssh://git@github.com/cmgoold/miniab.git
+python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayes.git
 ```
 
-Installing `miniab` will also create a local cache folder for storing
-Stan model objects, which is `.miniab` in the repository root.
+Installing ABayes will also create a local cache folder for storing
+Stan model objects, which is `.abayes` in the repository root.
 
 ## Simple API
 
@@ -49,23 +49,23 @@ code:
 ```python
 import numpy as np
 
-from miniab import MiniAb
+from abayes import ABayes
 
 rng = np.random.default_rng(1234)
 
 N = 50
 mu = [0, 1]
 sigma = [0.2, 1]
-y1 = np.random.normal(size=N, loc=mu[0], scale=sigma[0]) 
-y2 = np.random.normal(size=N, loc=mu[1], scale=sigma[1]) 
+y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
+y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
 ```
 
-We then initialize a `MiniAb` object with the default options
+We then initialize a `ABayes` object with the default options
 (normal likelihood, default priors) and fit the model, passing
 the data in as a tuple:
 
 ```python
-ab = MiniAb()
+ab = ABayes()
 ab.fit(data=(y1, y2))
 ```
 

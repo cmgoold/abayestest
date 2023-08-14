@@ -1,3 +1,0 @@
-LIKELIHOODS = [
-    "normal",
-]
