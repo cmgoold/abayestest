@@ -41,11 +41,11 @@ process:
 
 $$
 \begin{align}
-y_{ij} \sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
-\mu_{1} = 0\\
-\sigma_{1} = 0.2 \\
-\mu_{2} = 1\\
-\sigma_{2} = 1
+y_{ij} &\sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
+\mu_{1} &= 0\\
+\sigma_{1} &= 0.2 \\
+\mu_{2} &= 1\\
+\sigma_{2} &= 1
 \end{align}
 $$
 
