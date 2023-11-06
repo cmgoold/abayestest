@@ -17,6 +17,11 @@ import cmdstanpy as csp
 from .templates.distributions import LIKELIHOODS
 from ._globals import CACHE_LOCATION, ROOT
 
+__all__ = [
+    "ABayes",
+    "DEFAULT_PRIORS",
+]
+
 DEFAULT_PRIORS = {"mu": "normal(0, 1)", "sigma": "normal(0, 1)"}
 
 ENVIRONMENT = Environment(loader=PackageLoader("abayes"))

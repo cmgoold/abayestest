@@ -3,16 +3,16 @@
 
 # ABayes
 
-ABayes is a small Python package for performing Bayesian AB testing.
+ABayes is a lightweight Python package for performing Bayesian AB testing.
 Computations are run using [Stan](
 https://mc-stan.org
 ) via [`cmdstanpy`](
 https://github.com/stan-dev/cmdstanpy
-) and [`jinja2`](
+), and [`jinja2`](
 https://github.com/pallets/jinja/
 ) is used
 as a backend templating engine
-to construct the Stan model files dynamically.
+to construct the Stan model files.
 
 ## Installation
 
@@ -25,6 +25,12 @@ python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayes.git
 Installing ABayes will also create a local cache folder for storing
 Stan model objects, which is `.abayes` in the repository root.
 
+### CmdStan
+ABayes requires a working `cmdstan` installation. The easiest
+way to download `cmdstan` is [via `cmdstanpy`](
+https://mc-stan.org/cmdstanpy/installation.html#function-install-cmdstan
+).
+
 ## Simple API
 
 The simplest use-case is running a comparison
@@ -33,15 +39,19 @@ data sets. First, let's sample some fake data, where
 we have two groups with the following data generating
 process:
 
-```
-y_{jj} ~ Normal(mu_{jj}, sigma_{jj})
-mu_1 = 0, sigma_1 = 0.2
-mu_2 = 1, sigma_1 = 1
-```
+$$
+\begin{align}
+y_{ij} \sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
+\mu_{1} = 0\\
+\sigma_{1} = 0.2 \\
+\mu_{2} = 1\\
+\sigma_{2} = 1
+\end{align}
+$$
 
 That is, both groups data are normally distributed
-with locations, `mu[1] = 0` and `mu[2] = 1`, and scales
-`sigma[1] = 0.2` and `sigma[2] = 1`, respectively.
+with locations, `0` and `1`, and scales
+`0.2` and `1`, respectively.
 Thus, there is a true difference of means of `1` and
 a true difference of scales of `0.8`. Here's the Python
 code:
@@ -60,7 +70,7 @@ y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0])
 y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
 ```
 
-We then initialize a `ABayes` object with the default options
+We then initialize an `ABayes` object with the default options
 (normal likelihood, default priors) and fit the model, passing
 the data in as a tuple:
 
@@ -87,14 +97,16 @@ mu_diff    -1.010  0.033  -1.071   -0.950      0.001    0.001    1035.0     910.
 sigma_diff -0.824  0.023  -0.868   -0.784      0.001    0.001    1026.0     861.0   1.01
 ```
 
-`miniab` always uses the terms `mu` and `sigma` to refer to 
+ABayes always uses the terms `mu` and `sigma` to refer to 
 vectors of group-specific means and standard deviations.
 The additional variables `mu_diff` and `sigma_diff` give
 the difference in posterior distributions between groups 1 and 2
 (i.e. `mu[0] - mu[1]` using Python's zero-indexing).
+As we can see, these recover the data-generating assumptions above.
 
 ## Under the hood 
-We can in inspect the likelihood distribution and priors via `MiniAb`'s
+We can in inspect the likelihood distribution and priors via 
+an `ABayes` instance's properties:
 properties:
 
 ```python
@@ -104,10 +116,10 @@ Out[3]: ('normal', {'mu': 'normal(0, 1)', 'sigma': 'normal(0, 1)'})
 
 The priors correspond to both groups (i.e. the Stan data is assumed in
 long-format and the prior statements are vectorized). Currently,
-different priors for each group is not a supported feature of `MiniAb`.
+different priors for each group is not a supported feature.
 By default, standard normal priors are set on the model parameters
 (standard half-normal for standard deviations),
-which are accessed via `miniab.miniab.DEFAULT_PRIORS`.
+which are accessed via `abayes.DEFAULT_PRIORS`.
 The prior text are just strings passed directly to Stan, so
 users can subsititute with any distribution and constants they wish.
 

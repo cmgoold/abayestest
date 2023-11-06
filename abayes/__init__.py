@@ -1,2 +1,2 @@
-from .abayes import ABayes
+from .abayes import *
 
