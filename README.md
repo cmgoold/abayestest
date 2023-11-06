@@ -42,10 +42,8 @@ process:
 $$
 \begin{align}
 y_{ij} &\sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
-\mu_{A} &= 0\\
-\sigma_{A} &= 0.2 \\
-\mu_{B} &= 1\\
-\sigma_{B} &= 1
+\mu_{A} &= 0, \quad \sigma_{A} &= 0.2 \\
+\mu_{B} &= 1, \quad \sigma_{B} &= 1
 \end{align}
 $$
 
