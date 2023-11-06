@@ -42,14 +42,14 @@ process:
 $$
 \begin{align}
 y_{ij} &\sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
-\mu_{1} &= 0\\
-\sigma_{1} &= 0.2 \\
-\mu_{2} &= 1\\
-\sigma_{2} &= 1
+\mu_{A} &= 0\\
+\sigma_{A} &= 0.2 \\
+\mu_{B} &= 1\\
+\sigma_{B} &= 1
 \end{align}
 $$
 
-That is, both groups data are normally distributed
+That is, both groups' data are normally distributed
 with locations, `0` and `1`, and scales
 `0.2` and `1`, respectively.
 Thus, there is a true difference of means of `1` and
@@ -61,13 +61,14 @@ import numpy as np
 
 from abayes import ABayes
 
-rng = np.random.default_rng(1234)
+SEED = 1234
+rng = np.random.default_rng(SEED)
 
 N = 50
 mu = [0, 1]
 sigma = [0.2, 1]
-y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
-y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
+y_a = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
+y_b = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
 ```
 
 We then initialize an `ABayes` object with the default options
@@ -76,7 +77,7 @@ the data in as a tuple:
 
 ```python
 ab = ABayes()
-ab.fit(data=(y1, y2))
+ab.fit(data=(y_a, y_b), seed=SEED)
 ```
 
 The model will run in Stan and return `self`.
@@ -88,21 +89,47 @@ https://github.com/arviz-devs/arviz
 ):
 
 ```
-             mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk ess_tail   r_hat
-mu[0]      -0.000  0.006  -0.011    0.012      0.000    0.000    1871.0     909.0   1.00
-mu[1]       1.009  0.032   0.948    1.067      0.001    0.001    1031.0     903.0   1.00
-sigma[0]    0.197  0.004   0.189    0.205      0.000    0.000     922.0     766.0   1.00
-sigma[1]    1.021  0.023   0.979    1.063      0.001    0.001     956.0     820.0   1.01
-mu_diff    -1.010  0.033  -1.071   -0.950      0.001    0.001    1035.0     910.0   1.01
-sigma_diff -0.824  0.023  -0.868   -0.784      0.001    0.001    1026.0     861.0   1.01
+             mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu[0]      -0.026  0.034  -0.091    0.036      0.001    0.000    4408.0    2992.0    1.0
+mu[1]       1.351  0.148   1.068    1.619      0.002    0.002    4401.0    3014.0    1.0
+mu_diff    -1.377  0.152  -1.663   -1.086      0.002    0.002    4426.0    3121.0    1.0
+sigma[0]    0.238  0.025   0.192    0.284      0.000    0.000    3814.0    2860.0    1.0
+sigma[1]    1.055  0.108   0.869    1.265      0.002    0.001    3850.0    2518.0    1.0
+sigma_diff -0.817  0.110  -1.013   -0.605      0.002    0.001    3791.0    2720.0    1.0
 ```
 
 ABayes always uses the terms `mu` and `sigma` to refer to 
-vectors of group-specific means and standard deviations.
+vectors of group-specific means and standard deviations,
+and condition A and B are always indexed as `0` and `1`
+in the outputs..
 The additional variables `mu_diff` and `sigma_diff` give
 the difference in posterior distributions between groups 1 and 2
 (i.e. `mu[0] - mu[1]` using Python's zero-indexing).
 As we can see, these recover the data-generating assumptions above.
+
+Using the estimated quantities, users can calculate
+any quantities or metrics that are meaningful
+to the AB test being performed. For instance,
+the probability that condition B scores greater than
+A is the proportion of the posterior distribution
+of `mu[1] - mu[0]` that is greater than zero,
+which in this case is 100%, as can be inferred
+from the `mu_diff` distribution directly:
+
+```python
+import matplotlib.pyplot as plt
+
+mu_diff = ab.draws["mu_diff"]
+
+plt.hist(mu_diff, bins=40, color="skyblue", alpha=0.5)
+plt.axvline(0, ls=":")
+plt.xlabel("score")
+plt.ylabel("density")
+plt.title("posterior of condition B - A")
+```
+
+![](docs/b-minus-a.png)
+
 
 ## Under the hood 
 We can in inspect the likelihood distribution and priors via 
