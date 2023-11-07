@@ -6,7 +6,7 @@ import pandas as pd
 from jinja2 import Environment, PackageLoader
 from jinja2.exceptions import TemplateNotFound
 from pathlib import Path
-from functools import cached_property
+from functools import cached_property, lru_cache
 from hashlib import md5
 import json
 import os
@@ -22,12 +22,20 @@ __all__ = [
     "DEFAULT_PRIORS",
 ]
 
-DEFAULT_PRIORS = {"mu": "normal(0, 1)", "sigma": "normal(0, 1)"}
+DEFAULT_PRIORS = {
+    "normal": {"mu_star": "normal(0, 1)", "sigma_star": "normal(0, 1)"},
+    "lognormal": {"mu_star": "normal(0, 1)", "sigma_star": "normal(0, 1)"},
+    "gamma": {"mu_star": "normal(0, 1)", "sigma_star": "normal(0, 1)"},
+    "poisson": {"mu_star": "normal(0, 1)"},
+    "bernoulli": {"mu_star": "normal(0, 1)"},
+    "binomial": {"mu_star": "normal(0, 1)"},
+}
 
 ENVIRONMENT = Environment(loader=PackageLoader("abayes"))
 
 VectorTypes = Union[List, np.ndarray]
 DataTypes = Union[Dict[str, VectorTypes], Tuple[VectorTypes, ...]]
+Priors = Dict[str, Tuple[str, ...]]
 
 class ABayes(object):
     """The main A/B testing class.
@@ -42,16 +50,20 @@ class ABayes(object):
     -------
     """
 
-    def __init__(self, likelihood: str = "normal", priors: Priors = DEFAULT_PRIORS, seed: int = None, force_compile: Optiona[bool] = None) -> None:
-        self._likelihood = likelihood
-        self._priors = priors
+    def __init__(self, likelihood: Literal[LIKELIHOODS] = "normal", priors: Optional[Priors] = None, seed: int = None, force_compile: Optiona[bool] = None) -> None:
+        self._likelihood = likelihood.lower()
+        if self._likelihood not in LIKELIHOODS:
+            raise ValueError(f"Unknown likelihood {self.likelihood}. Available likelihoods are {LIKELIHOODS}.")
+        self._priors = priors if priors is not None else DEFAULT_PRIORS[self._likelihood]
         self.model : csp.CmdStanModel = self.compile(force=force_compile)
         self._fit: csp.CmdStanMCMC = None
+        self._seed = seed
 
     likelihood = property(lambda self: self._likelihood)
     priors = property(lambda self: self._priors)
     cmdstan_mcmc = property(lambda self: self._fit)
     num_draws = property(lambda self: self._fit.num_draws_sampling * self._fit.chains)
+    seed = property(lambda self: self._seed)
 
     def fit(self, data: DataTypes, **cmdstanpy_kwargs) -> ABayes:
         if not hasattr(data, "__iter__"):
@@ -60,10 +72,16 @@ class ABayes(object):
             y1, y2 = data.values()
         else:
             y1, y2 = data
+        if self.likelihood == "binomial":
+            (n1, y1), (n2, y2) = y1, y2
         y = np.hstack([y1, y2])
+        if self.likelihood == "binomial":
+            n = np.hstack([n1, n2])
         _j = [1] * len(y1) + [2] * len(y2)
         clean_data = {"N": len(y1) + len(y2), "j": _j, "y": y}
-        self._fit = self.model.sample(data=clean_data, **cmdstanpy_kwargs, show_console=True)
+        if self.likelihood == "binomial":
+            clean_data["n"] = n
+        self._fit = self.model.sample(data=clean_data, **{"seed": self.seed, "show_console": True,  **cmdstanpy_kwargs})
         return self
 
     def compile(self, force: bool = False) -> CmdStanModel:
@@ -91,22 +109,32 @@ class ABayes(object):
         self._check_fit_exists()
         return az.from_cmdstanpy(self.cmdstan_mcmc)
     
-    @cached_property
+    @lru_cache
     def draws(self) -> np.ndarray:
         self._check_fit_exists()
         return self._fit.stan_variables()
 
-    @cached_property
+    @lru_cache
     def summary(self) -> pd.DataFrame:
         self._check_fit_exists()
-        variables = ["mu", "mu_diff"]
+        variables = ["mu", "mu_diff", "mu_star", "mu_star_diff"]
         if self._likelihood == "normal":
-            variables += ["sigma", "sigma_diff"]
-        if self._likelihood == "bernoulli":
-            variables += ["mu_prob", "mu_prob_diff"]
-        inference_data = self.inference_data
-        return az.summary(inference_data, var_names=variables)
+            variables += ["sigma", "sigma_diff", "sigma_star", "sigma_star_diff"]
+        return az.summary(self.inference_data, var_names=variables)
 
+    @lru_cache
+    def diagnose(self) -> str:
+        self._check_fit_exists()
+        print(self._fit.diagnose())
+
+    def compare_conditions(self) -> str:
+        self._check_fit_exists()
+        a_minus_b = self.draws()["mu_diff"]
+        return print(
+            f"{(sum(a_minus_b < 0)/self.num_draws) * 100:.2f}% of the posterior differences \n"
+            f"favour condition B."
+        )
+    
     def _hash(self):
         return md5(json.dumps(tuple((self.priors, self.likelihood))).encode("utf-8")).hexdigest()
 

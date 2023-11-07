@@ -42,16 +42,16 @@ process:
 $$
 \begin{align}
 y_{ij} &\sim \mathrm{Normal}(\mu_{j}, \sigma_{j})\\
-\mu_{A} &= 0, \quad \sigma_{A} &= 0.2 \\
-\mu_{B} &= 1, \quad \sigma_{B} &= 1
+\mu_{A} &= 0, \quad \sigma_{A} = 0.2 \\
+\mu_{B} &= 1, \quad \sigma_{B} = 1
 \end{align}
 $$
 
 That is, both groups' data are normally distributed
 with locations, `0` and `1`, and scales
 `0.2` and `1`, respectively.
-Thus, there is a true difference of means of `1` and
-a true difference of scales of `0.8`. Here's the Python
+Thus, there is a true difference of means of `-1` and
+a true difference of scales of `-0.8`. Here's the Python
 code:
 
 ```python
@@ -62,7 +62,7 @@ from abayes import ABayes
 SEED = 1234
 rng = np.random.default_rng(SEED)
 
-N = 50
+N = 100
 mu = [0, 1]
 sigma = [0.2, 1]
 y_a = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
@@ -74,36 +74,84 @@ We then initialize an `ABayes` object with the default options
 the data in as a tuple:
 
 ```python
-ab = ABayes()
-ab.fit(data=(y_a, y_b), seed=SEED)
+ab = ABayes(seed=SEED)
+ab.fit(data=(y_a, y_b))
 ```
 
 The model will run in Stan and return `self`.
 You can access the `cmdstanpy.CmdStanMCMC` object
-itself using `ab.cmdstan_mcmc`. To take a quick
-look at the results, run `ab.summary`, which returns
+itself using `ab.cmdstan_mcmc`. 
+For instance, we can use `cmdstanpy`'s diagnostic
+function to check for any convergence problems:
+
+```python
+ab.diagnose()
+```
+
+which returns:
+
+```
+Checking sampler transitions treedepth.
+Treedepth satisfactory for all transitions.
+
+Checking sampler transitions for divergences.
+No divergent transitions found.
+
+Checking E-BFMI - sampler transitions HMC potential energy.
+E-BFMI satisfactory.
+
+Effective sample size satisfactory.
+
+Split R-hat values satisfactory all parameters.
+
+Processing complete, no problems detected.
+```
+
+indicating not problems.
+
+To take a quick
+look at the results, run `ab.summary()`, which returns
 a summary Pandas `DataFrame` straight from [`Arviz`](
 https://github.com/arviz-devs/arviz
 ):
 
 ```
-             mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
-mu[0]      -0.026  0.034  -0.091    0.036      0.001    0.000    4408.0    2992.0    1.0
-mu[1]       1.351  0.148   1.068    1.619      0.002    0.002    4401.0    3014.0    1.0
-mu_diff    -1.377  0.152  -1.663   -1.086      0.002    0.002    4426.0    3121.0    1.0
-sigma[0]    0.238  0.025   0.192    0.284      0.000    0.000    3814.0    2860.0    1.0
-sigma[1]    1.055  0.108   0.869    1.265      0.002    0.001    3850.0    2518.0    1.0
-sigma_diff -0.817  0.110  -1.013   -0.605      0.002    0.001    3791.0    2720.0    1.0
+                  mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu[0]            0.026  0.023  -0.018    0.067      0.000    0.000    4655.0    3215.0    1.0
+mu[1]            1.059  0.105   0.851    1.249      0.001    0.001    5554.0    3166.0    1.0
+mu_diff         -1.033  0.108  -1.222   -0.820      0.001    0.001    5566.0    3225.0    1.0
+mu_star[0]       0.026  0.023  -0.018    0.067      0.000    0.000    4655.0    3215.0    1.0
+mu_star[1]       1.059  0.105   0.851    1.249      0.001    0.001    5554.0    3166.0    1.0
+mu_star_diff    -1.033  0.108  -1.222   -0.820      0.001    0.001    5566.0    3225.0    1.0
+sigma[0]         0.229  0.016   0.199    0.259      0.000    0.000    4938.0    3202.0    1.0
+sigma[1]         1.046  0.077   0.904    1.190      0.001    0.001    4530.0    2968.0    1.0
+sigma_diff      -0.817  0.078  -0.973   -0.681      0.001    0.001    4504.0    3051.0    1.0
+sigma_star[0]   -1.478  0.071  -1.616   -1.349      0.001    0.001    4938.0    3202.0    1.0
+sigma_star[1]    0.042  0.073  -0.101    0.174      0.001    0.001    4530.0    2968.0    1.0
+sigma_star_diff -1.520  0.101  -1.709   -1.334      0.001    0.001    4755.0    3271.0    1.0
 ```
 
-ABayes always uses the terms `mu` and `sigma` to refer to 
-vectors of group-specific means and standard deviations,
-and condition A and B are always indexed as `0` and `1`
-in the outputs..
-The additional variables `mu_diff` and `sigma_diff` give
+ABayes always uses the parameter `mu` to refer to 
+the vector of group-specific locations, or other non-normal
+distribution's canonincal parameters (e.g. the Poisson
+rate parameter; see below). Dispersion parameters,
+such as the normal distribution's scale parameter,
+are referred to as `sigma`.
+
+The parameters suffixed with `_star` are unconstrained
+parameters, which ABayes uses for estimation under-the-hood.
+More details about the parameter transformations and 
+likelihood parameterizations are given below, but
+for the normal distribution, `mu = mu_star` and `sigma_star = log(sigma)`.
+Conditions A and B are always indexed as `0` and `1`
+in the Python outputs.
+The additional variables `mu_diff` and `sigma_diff` (and
+the `_star` companions) give
 the difference in posterior distributions between groups 1 and 2
 (i.e. `mu[0] - mu[1]` using Python's zero-indexing).
-As we can see, these recover the data-generating assumptions above.
+As we can see, these recover the data-generating assumptions above,
+with posterior means close to `-1` and `-0.8` for the means
+and standard deviations, respectively.
 
 Using the estimated quantities, users can calculate
 any quantities or metrics that are meaningful
@@ -123,16 +171,28 @@ def density(x):
     grid = np.linspace(*limits, 1000)
     return grid, gaussian_kde(x)(grid)
 
-mu_diff = ab.draws["mu_diff"]
+mu_diff = ab.draws()["mu_diff"]
 
 plt.plot(*density(mu_diff), color="#0492c2", lw=4)
 plt.axvline(0, ls=":", color="gray")
 plt.xlabel("score")
 plt.ylabel("density")
-plt.title("posterior of condition B - A")
+plt.title("posterior of condition A - B")
 ```
 
-![](doc/b-minus-a.png)
+![](doc/a-minus-b.png)
+
+The `ABayes` class also contains a handy method
+to report the distribution of
+differences in the posteriors
+between conditions called
+`compare_conditions`, which
+tells us that:
+
+```
+100.00% of the posterior differences 
+favour condition B.
+```
 
 ## Posterior predictive distribution
 ABayes automatically calculates the posterior predictive
@@ -145,7 +205,7 @@ distribution using a small bit of manipulation
 of the draws:
 
 ```python
-y_rep_raw = ab.draws["y_rep"]
+y_rep_raw = ab.draws()["y_rep"]
 y_reps = y_rep_raw[:, :N], y_rep_raw[:, N:]
 ys = y_a, y_b
 
@@ -168,6 +228,19 @@ for i in range(2):
 
 Currently, ABayes supports normal, lognormal, gamma,
 Bernoulli, binomial, and Poisson distributions.
+
+For non-normal likelihood functions, ABayes
+calculates the differences in canonical
+parameters on both unconstrained and 
+original scales, which are detailed below:
+
+| Distribution | Parameterization | Link function   | Unconstrained name | Original name |
+| ------------ | ---------------- | --------------- | ------------------ | ------------- |
+| normal       | mean/variance    | identity        | `mu_star`, `sigma_star`      | `mu`, `sigma`   |
+| Bernoulli    | probability      | logit           | `mu_star`               | `mu`     |
+| binomial     | logit            | `mu`               | `mu_prob`     |
+| lognormal    | log              | `mu`               | `mu_pos`      |
+| gamma        | log              | `mu`               | `mu`          |
 
 
 ## Under the hood 

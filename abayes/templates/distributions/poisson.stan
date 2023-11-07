@@ -2,7 +2,7 @@
 
 {% block data %}
   {{ super() }}
-  array[N] int<lower=0, upper=1> y;
+  array[N] int<lower=0> y;
 {% endblock %}
 
 {% block model %}
@@ -11,22 +11,22 @@
 {% endblock priors %}
 {% block likelihood %}
   {{ super() }}
-  y ~ bernoulli_logit(mu_star_j);
+  y ~ poisson_log(mu_star_j);
 {% endblock likelihood %}
 {% endblock %}
 
 {% block generated_quantities %}
 {% block declarations %}
   {{ super() }}
-  vector<lower=0, upper=1>[N] mu_j = inv_logit(mu_star_j);
-  vector<lower=0, upper=1>[2] mu = inv_logit(mu_star);
+  vector<lower=0>[2] mu = exp(mu_star);
+  vector[N] mu_j = exp(mu_star_j);
   real mu_diff = mu[1] - mu[2];
-  array[N] int<lower=0, upper=1> y_rep;
+  array[N] int<lower=0> y_rep;
 {% endblock %}
 {% block computations %}
   {{ super() }}
   for(n in 1:N)
-    y_rep[n] = bernoulli_logit_rng(mu_star_j[n]);
+    y_rep[n] = poisson_log_rng(mu_star_j[n]);
 {% endblock %}
 {% endblock %}
   

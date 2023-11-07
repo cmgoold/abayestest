@@ -2,7 +2,7 @@
 
 {% block data %}
   {{ super() }}
-  vector[N] y;
+  vector<lower=0>[N] y;
 {% endblock data %}
 
 {% block parameters %}
@@ -22,7 +22,7 @@
 {% endblock priors %}
 {% block likelihood %}
   {{ super() }}
-  y ~ normal(mu_star_j, exp(sigma_star_j));
+  y ~ lognormal(mu_star_j, exp(sigma_star_j));
 {% endblock likelihood %}
 {% endblock model %}
 
@@ -41,7 +41,7 @@
 {% block computations %}
   {{ super() }}
   for(n in 1:N)
-    y_rep[n] = normal_rng(mu_star_j[n], sigma_j[n]);
+    y_rep[n] = lognormal_rng(mu_star_j[n], sigma_j[n]);
 {% endblock computations %}
 {% endblock generated_quantities %}
   

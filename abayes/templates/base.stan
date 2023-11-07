@@ -17,7 +17,7 @@ transformed data {
 parameters {
 {%- block parameters %}
   /* raw model parameters */
-  vector[2] mu;
+  vector[2] mu_star;
 {%- endblock parameters %}
 }
 
@@ -26,7 +26,7 @@ transformed parameters {
   /* parameter transformations */
   // nb: no change of variables adjustments are made
   // to these parameters
-  vector[N] mu_j = mu[j];
+  vector[N] mu_star_j = mu_star[j];
 {%- endblock transformed_parameters %}
 }
 
@@ -34,7 +34,7 @@ model {
 {%- block model %}
 {%- block priors %}
   /* priors */
-  mu ~ {{ priors.mu }};
+  mu_star ~ {{ priors.mu_star }};
 {%- endblock priors -%}
 {%- block likelihood -%}
   /* likelihood statement */
@@ -46,11 +46,11 @@ generated quantities {
 {%- block generated_quantities -%}
 {%- block declarations %}
   /* declarations */
-  real mu_diff;
+  real mu_star_diff;
 {%- endblock declarations -%}
 {%- block computations %}
   /* computations */
-  mu_diff = mu[1] - mu[2];
+  mu_star_diff = mu_star[1] - mu_star[2];
 {%- endblock computations -%}
 {%- endblock generated_quantities -%}
 }

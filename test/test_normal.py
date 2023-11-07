@@ -25,20 +25,20 @@ def test_abayes_instance():
 
 def test_abayes_fit_from_tuple():
     assert ab.fit(data=(y1, y2), **cmdstan_kwargs)
-    draws = ab.draws
+    draws = ab.draws()
     assert np.isclose(draws["mu_diff"].mean(), mu[0] - mu[1], rtol=1e-1)
     assert np.isclose(draws["sigma_diff"].mean(), sigma[0] - sigma[1], rtol=1e-1)
 
 def test_abayes_fit_from_dict():
     assert ab.fit(data={"y1": y1, "y2": y2}, **cmdstan_kwargs)
-    draws = ab.draws
+    draws = ab.draws()
     assert np.isclose(draws["mu_diff"].mean(), mu[0] - mu[1], rtol=1e-1)
     assert np.isclose(draws["sigma_diff"].mean(), sigma[0] - sigma[1], rtol=1e-1)
 
 def test_abayes_methods():
     ab.fit(data=(y1, y2), **cmdstan_kwargs)
-    assert isinstance(ab.draws, dict)
-    assert isinstance(ab.summary, pd.DataFrame)
+    assert isinstance(ab.draws(), dict)
+    assert isinstance(ab.summary(), pd.DataFrame)
     assert isinstance(ab.inference_data, az.InferenceData)
 
 def test_abayes_hash():
