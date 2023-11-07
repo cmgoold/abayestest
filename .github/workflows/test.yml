@@ -23,7 +23,7 @@ jobs:
 
       - name: install cmdstan
         run: |
-          install_cmdstan -v 2.29.2 --progress
+          install_cmdstan -v 2.33.1 --progress
 
       - name: run-tests
         run: | 
