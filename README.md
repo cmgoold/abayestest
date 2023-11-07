@@ -116,23 +116,63 @@ from the `mu_diff` distribution directly:
 
 ```python
 import matplotlib.pyplot as plt
+from scipy.stats import gaussian_kde
+
+def density(x):
+    limits = x.min(), x.max()
+    grid = np.linspace(*limits, 1000)
+    return grid, gaussian_kde(x)(grid)
 
 mu_diff = ab.draws["mu_diff"]
 
-plt.hist(mu_diff, bins=40, color="skyblue", alpha=0.5)
-plt.axvline(0, ls=":")
+plt.plot(*density(mu_diff), color="#0492c2", lw=4)
+plt.axvline(0, ls=":", color="gray")
 plt.xlabel("score")
 plt.ylabel("density")
 plt.title("posterior of condition B - A")
 ```
 
-![](docs/b-minus-a.png)
+![](doc/b-minus-a.png)
+
+## Posterior predictive distribution
+ABayes automatically calculates the posterior predictive
+distribution of the data, which is accessible in
+the posterior draws object under the key `y_rep`. 
+This array is in long form, where group A and B's
+predictions are stacked on top of each other.
+Using the example above, we can inspect this
+distribution using a small bit of manipulation
+of the draws:
+
+```python
+y_rep_raw = ab.draws["y_rep"]
+y_reps = y_rep_raw[:, :N], y_rep_raw[:, N:]
+ys = y_a, y_b
+
+fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+for i in range(2):
+    a_or_b = (1 - i) * "A" + i * "B"
+    grid, samples = density(y_reps[i].flatten())
+    ax[i].plot(grid, samples, color="#0492c2", lw=3, label="Posterior predictive")
+    ax[i].plot(ys[i], [0.01]*len(ys[i]), '|', color="black", label="raw")
+    ax[i].set_title(a_or_b)
+    ax[i].set_xlabel("score")
+    ax[i].set_ylabel("density")
+    if not i:
+        ax[i].legend(frameon=False, loc="upper right")
+```
+
+![](doc/ppd.png)
+
+# Likelihood functions
+
+Currently, ABayes supports normal, lognormal, gamma,
+Bernoulli, binomial, and Poisson distributions.
 
 
 ## Under the hood 
 We can in inspect the likelihood distribution and priors via 
 an `ABayes` instance's properties:
-properties:
 
 ```python
 ab.likelihood, ab.priors

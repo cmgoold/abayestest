@@ -51,10 +51,11 @@ class ABayes(object):
     likelihood = property(lambda self: self._likelihood)
     priors = property(lambda self: self._priors)
     cmdstan_mcmc = property(lambda self: self._fit)
+    num_draws = property(lambda self: self._fit.num_draws_sampling * self._fit.chains)
 
     def fit(self, data: DataTypes, **cmdstanpy_kwargs) -> ABayes:
         if not hasattr(data, "__iter__"):
-            raise ValueError("Data passed to MiniAb.fit must be an iterable.")
+            raise ValueError("Data passed to ABayes.fit must be an iterable.")
         if isinstance(data, Dict):
             y1, y2 = data.values()
         else:
