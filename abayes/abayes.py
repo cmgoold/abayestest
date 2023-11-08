@@ -50,17 +50,19 @@ class ABayes(object):
     -------
     """
 
-    def __init__(self, likelihood: Literal[LIKELIHOODS] = "normal", priors: Optional[Priors] = None, seed: int = None, force_compile: Optiona[bool] = None) -> None:
+    def __init__(self, likelihood: Literal[LIKELIHOODS] = "normal", priors: Optional[Priors] = None, prior_only: bool = False, seed: int = None, force_compile: Optiona[bool] = None) -> None:
         self._likelihood = likelihood.lower()
         if self._likelihood not in LIKELIHOODS:
             raise ValueError(f"Unknown likelihood {self.likelihood}. Available likelihoods are {LIKELIHOODS}.")
         self._priors = priors if priors is not None else DEFAULT_PRIORS[self._likelihood]
+        self._prior_only = prior_only
         self.model : csp.CmdStanModel = self.compile(force=force_compile)
         self._fit: csp.CmdStanMCMC = None
         self._seed = seed
 
     likelihood = property(lambda self: self._likelihood)
     priors = property(lambda self: self._priors)
+    prior_only = property(lambda self: self._prior_only)
     cmdstan_mcmc = property(lambda self: self._fit)
     num_draws = property(lambda self: self._fit.num_draws_sampling * self._fit.chains)
     seed = property(lambda self: self._seed)
@@ -101,7 +103,7 @@ class ABayes(object):
             raise ValueError(f"Cannot build model for likelihood {self._likelihood}.\n"
                              f"Likelihoods available are {LIKELIHOODS}.")
 
-        rendered = template.render(priors=self.priors)
+        rendered = template.render(priors=self.priors, sample=int(not self.prior_only))
         return rendered
         
     @property
@@ -122,21 +124,26 @@ class ABayes(object):
             variables += ["sigma", "sigma_diff", "sigma_star", "sigma_star_diff"]
         return az.summary(self.inference_data, var_names=variables)
 
-    @lru_cache
     def diagnose(self) -> str:
         self._check_fit_exists()
         print(self._fit.diagnose())
 
     def compare_conditions(self) -> str:
         self._check_fit_exists()
-        a_minus_b = self.draws()["mu_diff"]
+        mu_a_minus_b = self.draws()["mu_diff"]
+        if "sigma_diff" in self.draws():
+            sigma_a_minus_b = self.draws()["sigma_diff"]
+            report_sigma = 1
+        else:
+            sigma_a_minus_b = 0
+            report_sigma = 0
         return print(
-            f"{(sum(a_minus_b < 0)/self.num_draws) * 100:.2f}% of the posterior differences \n"
-            f"favour condition B."
+            f"{(sum(mu_a_minus_b < 0)/self.num_draws) * 100:.2f}% of the posterior differences for mu favour condition B.",
+            "" if not report_sigma else f"\n{(sum(sigma_a_minus_b < 0)/self.num_draws) * 100:.2f}% of the posterior differences for sigma favour condition B."
         )
     
     def _hash(self):
-        return md5(json.dumps(tuple((self.priors, self.likelihood))).encode("utf-8")).hexdigest()
+        return md5(json.dumps(tuple((self.priors, self.prior_only, self.likelihood))).encode("utf-8")).hexdigest()
 
     def _check_fit_exists(self) -> Union[None, Exception]:
         if self._fit is None:

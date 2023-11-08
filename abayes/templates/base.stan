@@ -23,10 +23,16 @@ parameters {
 
 transformed parameters {
 {%- block transformed_parameters %}
+{%- block tpar_declarations -%}
   /* parameter transformations */
   // nb: no change of variables adjustments are made
   // to these parameters
+  vector[N] lp;
   vector[N] mu_star_j = mu_star[j];
+{%- endblock tpar_declarations -%}
+{%- block likelihood -%}
+  /* lpdf likelihood statement */
+{%- endblock likelihood -%}
 {%- endblock transformed_parameters %}
 }
 
@@ -36,9 +42,11 @@ model {
   /* priors */
   mu_star ~ {{ priors.mu_star }};
 {%- endblock priors -%}
-{%- block likelihood -%}
-  /* likelihood statement */
-{%- endblock likelihood -%}
+{%- block log_density -%}
+  {% if sample %}
+    target += lp;
+  {% endif %}
+{%- endblock log_density -%}
 {%- endblock model -%}
 }
 

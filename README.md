@@ -107,10 +107,9 @@ Split R-hat values satisfactory all parameters.
 Processing complete, no problems detected.
 ```
 
-indicating not problems.
+indicating no problems.
 
-To take a quick
-look at the results, run `ab.summary()`, which returns
+To inspect the results, run `ab.summary()`, which returns
 a summary Pandas `DataFrame` straight from [`Arviz`](
 https://github.com/arviz-devs/arviz
 ):
@@ -141,7 +140,7 @@ are referred to as `sigma`.
 The parameters suffixed with `_star` are unconstrained
 parameters, which ABayes uses for estimation under-the-hood.
 More details about the parameter transformations and 
-likelihood parameterizations are given below, but
+likelihood parameterisations are given below, but
 for the normal distribution, `mu = mu_star` and `sigma_star = log(sigma)`.
 Conditions A and B are always indexed as `0` and `1`
 in the Python outputs.
@@ -190,8 +189,8 @@ between conditions called
 tells us that:
 
 ```
-100.00% of the posterior differences 
-favour condition B.
+100.00% of the posterior differences for mu favour condition B.
+100.00% of the posterior differences for sigma favour condition B.
 ```
 
 ## Posterior predictive distribution
@@ -201,8 +200,8 @@ the posterior draws object under the key `y_rep`.
 This array is in long form, where group A and B's
 predictions are stacked on top of each other.
 Using the example above, we can inspect this
-distribution using a small bit of manipulation
-of the draws:
+distribution using some small manipulation
+of the posterior draws:
 
 ```python
 y_rep_raw = ab.draws()["y_rep"]
@@ -224,6 +223,9 @@ for i in range(2):
 
 ![](doc/ppd.png)
 
+The rug plots show that the observed data fall within
+the posterior predictive densities.
+
 # Likelihood functions
 
 Currently, ABayes supports normal, lognormal, gamma,
@@ -232,37 +234,139 @@ Bernoulli, binomial, and Poisson distributions.
 For non-normal likelihood functions, ABayes
 calculates the differences in canonical
 parameters on both unconstrained and 
-original scales, which are detailed below:
+original scales.
+The table below illustrates how each
+likelihood distribution is parameterised,
+what link functions are used to transform
+the parameters to the unconstrained scale,
+and the name of the unconstrained and
+original-scale parameters, for reference.
 
-| Distribution | Parameterization | Link function   | Unconstrained name | Original name |
+| Distribution | Parameterization | Link function transforms                             |
 | ------------ | ---------------- | --------------- | ------------------ | ------------- |
-| normal       | mean/variance    | identity        | `mu_star`, `sigma_star`      | `mu`, `sigma`   |
-| Bernoulli    | probability      | logit           | `mu_star`               | `mu`     |
-| binomial     | logit            | `mu`               | `mu_prob`     |
-| lognormal    | log              | `mu`               | `mu_pos`      |
-| gamma        | log              | `mu`               | `mu`          |
+| normal       | mean, sd    | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)`   |
+| lognormal    | log-scale mean, log-scale sd | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)` | 
+| gamma        | shape, rate     | shape := `mu^2 / sigma^2 = exp(mu_star)^2 / exp(sigma_star)^2`</br>rate := `shape / mu = shape / exp(mu_star)` |
+| poisson      | rate         | rate := `mu = exp(mu_star)` |
+| Bernoulli    | probability      | probability := `mu = logit^-1(mu_star)` |
+| binomial     | probability      | probability := `mu = logit^-1(mu_star)` |
 
+ABayes will always return the `mu`, `mu_star`, `sigma` and `sigma_star` parameters,
+and their posterior differences, as standard.
+Additional variables appended with `_j` indicate the long-form parameter vectors,
+i.e. the value of the parameters at each index or case in the data.
 
-## Under the hood 
-We can in inspect the likelihood distribution and priors via 
-an `ABayes` instance's properties:
+All but the binomial likelihood require the same data format as above. That is,
+the normal, lognormal, gamma, poisson, and bernoulli models just require
+the `y` data vectors as a tuple, or alternatively as a dictionary.
+The binomial likelihoods require an additional data vector for the `n`
+parameter in the [binomial PMF](
+https://en.wikipedia.org/wiki/Binomial_distribution
+). It's assumed that the data for binomial models
+enter as a tuple or dictionary of tuples, in the
+form of `data=( (n1, y1), (n2, y2) )`.
+
+Taking a specific example, below we simulate binomial
+data and it a model:
 
 ```python
-ab.likelihood, ab.priors
-Out[3]: ('normal', {'mu': 'normal(0, 1)', 'sigma': 'normal(0, 1)'})
+N = 500
+mu = [0.6, 0.9]
+n = rng.choice(range(70, 100), N)
+y1 = rng.binomial(n=n, size=N, p=mu[0])
+y2 = rng.binomial(n=n, size=N, p=mu[1])
+
+data = (n, y1), (n, y2)
+binomial = ABayes(likelihood="binomial", seed=SEED)
+binomial.fit(data)
+binomial.summary()
 ```
 
-The priors correspond to both groups (i.e. the Stan data is assumed in
-long-format and the prior statements are vectorized). Currently,
-different priors for each group is not a supported feature.
-By default, standard normal priors are set on the model parameters
-(standard half-normal for standard deviations),
-which are accessed via `abayes.DEFAULT_PRIORS`.
-The prior text are just strings passed directly to Stan, so
-users can subsititute with any distribution and constants they wish.
+```
+               mean     sd  hdi_3%  hdi_97%  mcse_mean  mcse_sd  ess_bulk  ess_tail  r_hat
+mu[0]         0.596  0.002   0.592    0.601        0.0      0.0    3597.0    2533.0    1.0
+mu[1]         0.898  0.001   0.896    0.901        0.0      0.0    3186.0    2305.0    1.0
+mu_diff      -0.302  0.003  -0.307   -0.297        0.0      0.0    3570.0    2501.0    1.0
+mu_star[0]    0.391  0.010   0.371    0.408        0.0      0.0    3597.0    2533.0    1.0
+mu_star[1]    2.179  0.016   2.149    2.209        0.0      0.0    3186.0    2305.0    1.0
+mu_star_diff -1.788  0.019  -1.823   -1.753        0.0      0.0    3374.0    2422.0    1.0
+```
 
-The `ab.model` attribute returns the `cmdstanpy.CmdStanModel` attribute,
-which is stored in the cache location. The 'private' attribute `_render_model`
+Here, the `mu_diff` parameter tells us that the mean posterior differences
+is `-0.3`, which is exactly what we simulated.
+
+# Priors and prior predictive simulations
+
+The default priors are all standard normals on the unconstrained scales,
+which can be inspected using:
+
+```python
+from abayes import DEFAULT_PRIORS
+DEFAULT_PRIORS
+```
+
+returning:
+
+```
+'normal': {'mu_star': 'normal(0, 1)', 'sigma_star': 'normal(0, 1)'},
+'lognormal': {'mu_star': 'normal(0, 1)', 'sigma_star': 'normal(0, 1)'},
+'gamma': {'mu_star': 'normal(0, 1)', 'sigma_star': 'normal(0, 1)'},
+'poisson': {'mu_star': 'normal(0, 1)'},
+'bernoulli': {'mu_star': 'normal(0, 1)'},
+'binomial': {'mu_star': 'normal(0, 1)'}}
+```
+
+These priors are generally weakly informative,
+but can be changed to any Stan probability
+distributions you like.
+At the moment, different priors for
+each group, or hierarchical structures,
+are not supported.
+
+ABayes also supports running prior
+predictive simulations using the 
+`prior_only` flag passed to the 
+class constructor:
+
+```python
+rng = np.random.default_rng(SEED)
+N = 100
+mu = [0, 1]
+sigma = [0.2, 1]
+y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
+y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
+
+prior = ABayes(prior_only=True, seed=SEED)
+prior.fit((y1, y2))
+
+y_rep_raw_prior = prior.draws()["y_rep"]
+y_reps_prior = y_rep_raw_prior[:, :N], y_rep_raw_prior[:, N:]
+ys = y1, y2
+
+fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+for i in range(2):
+    a_or_b = (1 - i) * "A" + i * "B"
+    grid, samples = density(y_reps[i].flatten())
+    prior_grid, prior_samples = density(y_reps_prior[i].flatten())
+    ax[i].plot(grid, samples, color="green", lw=3, label="Posterior predictive")
+    ax[i].plot(prior_grid, prior_samples, color="#0492c2", lw=3, label="Prior predictive")
+    ax[i].plot(ys[i], [0.01]*len(ys[i]), '|', color="black", label="raw")
+    ax[i].set_title(a_or_b)
+    ax[i].set_xlabel("score")
+    ax[i].set_ylabel("density")
+    ax[i].set_xlim((-20, 20))
+    if not i:
+        ax[i].legend(frameon=False, loc="upper right")
+```
+
+![](doc/prior-ppd.png)
+
+The above plot shows the prior predictive distribution
+in blue and posterior predictive distribution
+from the first example above in green.
+
+# Raw Stan code
+The 'private' attribute `_render_model`
 can be used, if interested, to see the raw Stan code:
 
 ```python

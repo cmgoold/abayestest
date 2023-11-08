@@ -10,9 +10,6 @@ from abayes._globals import CACHE_LOCATION
 SEED = 1234
 rng = np.random.default_rng(SEED)
 
-def logit(x):
-    return np.log(x) - np.log(1 - x)
-
 N = 1000
 mu = [0.6, 0.9]
 n = rng.choice(range(70, 100), N)

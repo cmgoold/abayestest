@@ -11,8 +11,15 @@
 {% endblock parameters %}
 
 {% block transformed_parameters %}
+{% block tpar_declarations %}
   {{ super() }}
   vector[N] sigma_star_j = sigma_star[j];
+{% endblock tpar_declarations %}
+{% block likelihood %}
+  {{ super() }}
+  for(nn in 1:N)
+    lp[nn] = normal_lpdf(y[nn] | mu_star_j[nn], exp(sigma_star_j[nn]));
+{% endblock likelihood %}
 {% endblock transformed_parameters %}
 
 {% block model %}
@@ -20,10 +27,9 @@
   {{ super() }}
   sigma_star ~ {{ priors.sigma_star }};
 {% endblock priors %}
-{% block likelihood %}
+{% block log_density %}
   {{ super() }}
-  y ~ normal(mu_star_j, exp(sigma_star_j));
-{% endblock likelihood %}
+{% endblock log_density %}
 {% endblock model %}
 
 {% block generated_quantities %}

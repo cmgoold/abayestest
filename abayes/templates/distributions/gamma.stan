@@ -11,21 +11,27 @@
 {% endblock parameters %}
 
 {% block transformed_parameters %}
+{% block tpar_declarations %}
   {{ super() }}
   vector[N] sigma_star_j = sigma_star[j];
+  vector[N] shape = pow(exp(mu_star_j) ./ exp(sigma_star_j), 2);
+  vector[N] rate = exp(mu_star_j) ./ pow(exp(sigma_star_j), 2);
+{% endblock tpar_declarations %}
+{% block likelihood %}
+  {{ super() }}
+  for(nn in 1:N)
+    lp[nn] = gamma_lpdf(y[nn] | shape[nn], rate[nn]);
+{% endblock likelihood %}
 {% endblock transformed_parameters %}
 
 {% block model %}
-vector[N] shape = pow(exp(mu_star_j) ./ exp(sigma_star_j), 2);
-vector[N] rate = exp(mu_star_j) ./ pow(exp(sigma_star_j), 2);
 {% block priors %}
   {{ super() }}
   sigma_star ~ {{ priors.sigma_star }};
 {% endblock priors %}
-{% block likelihood %}
+{% block log_density %}
   {{ super() }}
-  y ~ gamma(shape, rate);
-{% endblock likelihood %}
+{% endblock log_density %}
 {% endblock model %}
 
 {% block generated_quantities %}

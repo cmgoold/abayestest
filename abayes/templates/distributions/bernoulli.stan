@@ -5,14 +5,23 @@
   array[N] int<lower=0, upper=1> y;
 {% endblock %}
 
+{% block transformed_parameters %}
+{% block tpar_declarations %}
+  {{ super() }}
+{% endblock tpar_declarations %}
+{% block likelihood %}
+  for(nn in 1:N)
+    lp[nn] = bernoulli_logit_lpmf(y[nn] | mu_star_j[nn]);
+{% endblock likelihood %}
+{% endblock transformed_parameters %}
+
 {% block model %}
 {% block priors %}
   {{ super() }}
 {% endblock priors %}
-{% block likelihood %}
+{% block log_density %}
   {{ super() }}
-  y ~ bernoulli_logit(mu_star_j);
-{% endblock likelihood %}
+{% endblock log_density %}
 {% endblock %}
 
 {% block generated_quantities %}
