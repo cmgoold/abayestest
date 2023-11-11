@@ -1,9 +1,9 @@
 ![build](https://github.com/cmgoold/miniab/actions/workflows/test.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# ABayes
+# ABayestest
 
-ABayes is a lightweight Python package for performing Bayesian AB testing.
+ABayestest is a lightweight Python package for performing Bayesian AB testing.
 Computations are run using [Stan](
 https://mc-stan.org
 ) via [`cmdstanpy`](
@@ -19,14 +19,14 @@ to construct the Stan model files.
 To install, use:
 
 ```bash
-python3.10 -m pip install git+ssh://git@github.com/cmgoold/ABayes.git
+python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayestest.git
 ```
 
-Installing ABayes will also create a local cache folder for storing
+Installing ABayestest will also create a local cache folder for storing
 Stan model objects, which is `.abayes` in the repository root.
 
 ### CmdStan
-ABayes requires a working `cmdstan` installation. The easiest
+ABayestest requires a working `cmdstan` installation. The easiest
 way to download `cmdstan` is [via `cmdstanpy`](
 https://mc-stan.org/cmdstanpy/installation.html#function-install-cmdstan
 ).
@@ -57,7 +57,7 @@ code:
 ```python
 import numpy as np
 
-from abayes import ABayes
+from abayestest import ABayestest
 
 SEED = 1234
 rng = np.random.default_rng(SEED)
@@ -69,12 +69,12 @@ y_a = rng.normal(size=N, loc=mu[0], scale=sigma[0])
 y_b = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
 ```
 
-We then initialize an `ABayes` object with the default options
+We then initialize an `ABayestest` object with the default options
 (normal likelihood, default priors) and fit the model, passing
 the data in as a tuple:
 
 ```python
-ab = ABayes(seed=SEED)
+ab = ABayestest(seed=SEED)
 ab.fit(data=(y_a, y_b))
 ```
 
@@ -130,7 +130,7 @@ sigma_star[1]    0.042  0.073  -0.101    0.174      0.001    0.001    4530.0    
 sigma_star_diff -1.520  0.101  -1.709   -1.334      0.001    0.001    4755.0    3271.0    1.0
 ```
 
-ABayes always uses the parameter `mu` to refer to 
+ABayestest always uses the parameter `mu` to refer to 
 the vector of group-specific locations, or other non-normal
 distribution's canonincal parameters (e.g. the Poisson
 rate parameter; see below). Dispersion parameters,
@@ -138,7 +138,7 @@ such as the normal distribution's scale parameter,
 are referred to as `sigma`.
 
 The parameters suffixed with `_star` are unconstrained
-parameters, which ABayes uses for estimation under-the-hood.
+parameters, which ABayestest uses for estimation under-the-hood.
 More details about the parameter transformations and 
 likelihood parameterisations are given below, but
 for the normal distribution, `mu = mu_star` and `sigma_star = log(sigma)`.
@@ -181,7 +181,7 @@ plt.title("posterior of condition A - B")
 
 ![](doc/a-minus-b.png)
 
-The `ABayes` class also contains a handy method
+The `ABayestest` class also contains a handy method
 to report the distribution of
 differences in the posteriors
 between conditions called
@@ -194,7 +194,7 @@ tells us that:
 ```
 
 ## Posterior predictive distribution
-ABayes automatically calculates the posterior predictive
+ABayestest automatically calculates the posterior predictive
 distribution of the data, which is accessible in
 the posterior draws object under the key `y_rep`. 
 This array is in long form, where group A and B's
@@ -228,10 +228,10 @@ the posterior predictive densities.
 
 # Likelihood functions
 
-Currently, ABayes supports normal, lognormal, gamma,
+Currently, ABayestest supports normal, lognormal, gamma,
 Bernoulli, binomial, and Poisson distributions.
 
-For non-normal likelihood functions, ABayes
+For non-normal likelihood functions, ABayestest
 calculates the differences in canonical
 parameters on both unconstrained and 
 original scales.
@@ -251,7 +251,7 @@ original-scale parameters, for reference.
 | Bernoulli    | probability      | probability := `mu = logit^-1(mu_star)` |
 | binomial     | probability      | probability := `mu = logit^-1(mu_star)` |
 
-ABayes will always return the `mu`, `mu_star`, `sigma` and `sigma_star` parameters,
+ABayestest will always return the `mu`, `mu_star`, `sigma` and `sigma_star` parameters,
 and their posterior differences, as standard.
 Additional variables appended with `_j` indicate the long-form parameter vectors,
 i.e. the value of the parameters at each index or case in the data.
@@ -277,7 +277,7 @@ y1 = rng.binomial(n=n, size=N, p=mu[0])
 y2 = rng.binomial(n=n, size=N, p=mu[1])
 
 data = (n, y1), (n, y2)
-binomial = ABayes(likelihood="binomial", seed=SEED)
+binomial = ABayestest(likelihood="binomial", seed=SEED)
 binomial.fit(data)
 binomial.summary()
 ```
@@ -323,7 +323,7 @@ At the moment, different priors for
 each group, or hierarchical structures,
 are not supported.
 
-ABayes also supports running prior
+ABayestest also supports running prior
 predictive simulations using the 
 `prior_only` flag passed to the 
 class constructor:
@@ -336,7 +336,7 @@ sigma = [0.2, 1]
 y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
 y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
 
-prior = ABayes(prior_only=True, seed=SEED)
+prior = ABayestest(prior_only=True, seed=SEED)
 prior.fit((y1, y2))
 
 y_rep_raw_prior = prior.draws()["y_rep"]

@@ -4,8 +4,8 @@ import arviz as az
 import os
 import glob
 
-from ABayes import ABayes
-from ABayes._globals import CACHE_LOCATION
+from abayestest import ABayesTest
+from abayestest._globals import CACHE_LOCATION
 
 SEED = 1234
 rng = np.random.default_rng(SEED)
@@ -18,9 +18,9 @@ y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1])
 
 cmdstan_kwargs = {"iter_warmup": 250, "iter_sampling": 250}
 
-ab = ABayes(force_compile=True, seed=SEED, prior_only=True)
+ab = ABayesTest(force_compile=True, seed=SEED, prior_only=True)
 
-def test_ABayes_fit_prior_predictive():
+def test_abayestest_fit_prior_predictive():
     assert ab.fit(data=(y1, y2), **cmdstan_kwargs)
     draws = ab.draws()
     assert np.isclose(draws["mu_diff"].mean(), 0, atol=1e-1)

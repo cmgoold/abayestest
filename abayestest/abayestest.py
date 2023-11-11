@@ -18,7 +18,7 @@ from .templates.distributions import LIKELIHOODS
 from ._globals import CACHE_LOCATION, ROOT
 
 __all__ = [
-    "ABayes",
+    "ABayesTest",
     "DEFAULT_PRIORS",
 ]
 
@@ -31,16 +31,16 @@ DEFAULT_PRIORS = {
     "binomial": {"mu_star": "normal(0, 1)"},
 }
 
-ENVIRONMENT = Environment(loader=PackageLoader("ABayes"))
+ENVIRONMENT = Environment(loader=PackageLoader("abayestest"))
 
 VectorTypes = Union[List, np.ndarray]
 DataTypes = Union[Dict[str, VectorTypes], Tuple[VectorTypes, ...]]
 Priors = Dict[str, Tuple[str, ...]]
 
-class ABayes(object):
+class ABayesTest(object):
     """The main A/B testing class.
 
-    This class initializes a ABayes object instance, given a specified
+    This class initializes an ABayesTest object instance, given a specified
     likelihood function and a set of priors.
     """
 
@@ -61,9 +61,9 @@ class ABayes(object):
     num_draws = property(lambda self: self._fit.num_draws_sampling * self._fit.chains)
     seed = property(lambda self: self._seed)
 
-    def fit(self, data: DataTypes, **cmdstanpy_kwargs) -> ABayes:
+    def fit(self, data: DataTypes, **cmdstanpy_kwargs) -> abayestest:
         if not hasattr(data, "__iter__"):
-            raise ValueError("Data passed to ABayes.fit must be an iterable.")
+            raise ValueError("Data passed to abayestest.fit must be an iterable.")
         if isinstance(data, Dict):
             y1, y2 = data.values()
         else:
