@@ -31,7 +31,7 @@ DEFAULT_PRIORS = {
     "binomial": {"mu_star": "normal(0, 1)"},
 }
 
-ENVIRONMENT = Environment(loader=PackageLoader("abayes"))
+ENVIRONMENT = Environment(loader=PackageLoader("ABayes"))
 
 VectorTypes = Union[List, np.ndarray]
 DataTypes = Union[Dict[str, VectorTypes], Tuple[VectorTypes, ...]]
@@ -42,12 +42,6 @@ class ABayes(object):
 
     This class initializes a ABayes object instance, given a specified
     likelihood function and a set of priors.
-
-    Parameters
-    ----------
-
-    Returns
-    -------
     """
 
     def __init__(self, likelihood: Literal[LIKELIHOODS] = "normal", priors: Optional[Priors] = None, prior_only: bool = False, seed: int = None, force_compile: Optiona[bool] = None) -> None:

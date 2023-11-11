@@ -4,8 +4,8 @@ import arviz as az
 import os
 import glob
 
-from abayes import ABayes
-from abayes._globals import CACHE_LOCATION
+from ABayes import ABayes
+from ABayes._globals import CACHE_LOCATION
 
 SEED = 1234
 rng = np.random.default_rng(SEED)
@@ -20,7 +20,7 @@ cmdstan_kwargs = {"iter_warmup": 250, "iter_sampling": 250}
 
 ab = ABayes(likelihood="lognormal", force_compile=True, seed=SEED)
 
-def test_abayes_lognormal_fit():
+def test_ABayes_lognormal_fit():
     ab.fit(data=(y1, y2))
     draws = ab.draws()
     assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1) 

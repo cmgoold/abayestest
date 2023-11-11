@@ -6,19 +6,19 @@ reqs_file = project_root / "requirements.txt"
 with open(reqs_file) as f:
     requirements = f.read().splitlines()
 
-version_file = project_root / "abayes" / "version.txt"
+version_file = project_root / "ABayes" / "version.txt"
 with open(version_file) as f:
     version = f.read().strip()
 
 if __name__ == "__main__":
     setup(
-        name="abayes",
+        name="ABayes",
         version=version,
         desription="Bayesian AB testing with Stan and Python.",
         packages=find_packages(),
         install_requires=requirements,
         package_data={
-            "abayes": [
+            "ABayes": [
                 "templates/*.stan",
                 "distributions/*.stan",
             ]

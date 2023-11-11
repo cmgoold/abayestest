@@ -247,7 +247,7 @@ original-scale parameters, for reference.
 | normal       | mean, sd    | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)`   |
 | lognormal    | log-scale mean, log-scale sd | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)` | 
 | gamma        | shape, rate     | shape := `mu^2 / sigma^2 = exp(mu_star)^2 / exp(sigma_star)^2`</br>rate := `shape / mu = shape / exp(mu_star)` |
-| poisson      | rate         | rate := `mu = exp(mu_star)` |
+| Poisson      | rate         | rate := `mu = exp(mu_star)` |
 | Bernoulli    | probability      | probability := `mu = logit^-1(mu_star)` |
 | binomial     | probability      | probability := `mu = logit^-1(mu_star)` |
 
