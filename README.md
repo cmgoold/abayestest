@@ -19,7 +19,7 @@ to construct the Stan model files.
 To install, use:
 
 ```bash
-python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayes.git
+python3.10 -m pip install git+ssh://git@github.com/cmgoold/ABayes.git
 ```
 
 Installing ABayes will also create a local cache folder for storing
