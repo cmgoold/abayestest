@@ -10,8 +10,10 @@ from abayestest._globals import CACHE_LOCATION
 SEED = 1234
 rng = np.random.default_rng(SEED)
 
+
 def logit(x):
     return np.log(x) - np.log(1 - x)
+
 
 N = 1000
 mu = [0.6, 0.9]
@@ -23,9 +25,8 @@ cmdstan_kwargs = {"iter_warmup": 250, "iter_sampling": 250}
 
 ab = ABayesTest(likelihood="bernoulli", force_compile=True, seed=SEED)
 
+
 def test_abayestest_bernoulli_fit():
     ab.fit(data=(y1, y2))
     draws = ab.draws()
-    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1) 
-
-
+    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1)

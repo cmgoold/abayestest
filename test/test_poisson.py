@@ -19,9 +19,8 @@ cmdstan_kwargs = {"iter_warmup": 250, "iter_sampling": 250}
 
 ab = ABayesTest(likelihood="poisson", force_compile=True, seed=SEED)
 
+
 def test_abayestest_poisson_fit():
     ab.fit(data=(y1, y2))
     draws = ab.draws()
-    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1) 
-
-
+    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1)

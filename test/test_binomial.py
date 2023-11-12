@@ -20,9 +20,8 @@ cmdstan_kwargs = {"iter_warmup": 250, "iter_sampling": 250}
 
 ab = ABayesTest(likelihood="binomial", force_compile=True, seed=SEED)
 
+
 def test_abayestest_bernoulli_fit():
     ab.fit(data=((n, y1), (n, y2)))
     draws = ab.draws()
-    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1) 
-
-
+    assert np.isclose(mu[0] - mu[1], draws["mu_diff"].mean(), rtol=1e-1)
