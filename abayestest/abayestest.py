@@ -46,8 +46,6 @@ class ABayesTest(object):
     predictive simulation can be run by the `prior_only` argument
     to the constructor.
 
-    The general form of the models fit is:
-
     Attributes
     ------------
 
