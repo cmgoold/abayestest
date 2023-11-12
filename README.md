@@ -29,7 +29,7 @@ python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayestest.git
 ```
 
 Installing ABayesTest will also create a local cache folder for storing
-Stan model objects, which is `.abayes` in the repository root.
+Stan model objects, which is `.abayestest` in the repository root.
 
 ### CmdStan
 ABayesTest requires a working `cmdstan` installation. The easiest
