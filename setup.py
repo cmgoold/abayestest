@@ -16,7 +16,8 @@ if __name__ == "__main__":
         package_data={
             "abayestest": [
                 "templates/*.stan",
-                "distributions/*.stan",
+                "templates/distributions/*.stan",
+                "templates/chunks/*.stan",
             ]
         },
         python_requires=">=3.10",
