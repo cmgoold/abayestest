@@ -16,7 +16,13 @@ to construct the Stan model files.
 
 ## Installation
 
-To install, use:
+You can install ABayesTest via `pip`:
+
+```bash
+python3 -m pip install abayestest
+```
+
+To install the latest development version, use:
 
 ```bash
 python3.10 -m pip install git+ssh://git@github.com/cmgoold/abayestest.git
@@ -65,8 +71,8 @@ rng = np.random.default_rng(SEED)
 N = 100
 mu = [0, 1]
 sigma = [0.2, 1]
-y_a = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
-y_b = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
+y_a = rng.normal(size=N, loc=mu[0], scale=sigma[0])
+y_b = rng.normal(size=N, loc=mu[1], scale=sigma[1])
 ```
 
 We then initialize an `ABayesTest` object with the default options
@@ -80,7 +86,7 @@ ab.fit(data=(y_a, y_b))
 
 The model will run in Stan and return `self`.
 You can access the `cmdstanpy.CmdStanMCMC` object
-itself using `ab.cmdstan_mcmc`. 
+itself using `ab.cmdstan_mcmc`.
 For instance, we can use `cmdstanpy`'s diagnostic
 function to check for any convergence problems:
 
@@ -130,7 +136,7 @@ sigma_star[1]    0.042  0.073  -0.101    0.174      0.001    0.001    4530.0    
 sigma_star_diff -1.520  0.101  -1.709   -1.334      0.001    0.001    4755.0    3271.0    1.0
 ```
 
-ABayesTest always uses the parameter `mu` to refer to 
+ABayesTest always uses the parameter `mu` to refer to
 the vector of group-specific locations, or other non-normal
 distribution's canonincal parameters (e.g. the Poisson
 rate parameter; see below). Dispersion parameters,
@@ -139,7 +145,7 @@ are referred to as `sigma`.
 
 The parameters suffixed with `_star` are unconstrained
 parameters, which ABayesTest uses for estimation under-the-hood.
-More details about the parameter transformations and 
+More details about the parameter transformations and
 likelihood parameterisations are given below, but
 for the normal distribution, `mu = mu_star` and `sigma_star = log(sigma)`.
 Conditions A and B are always indexed as `0` and `1`
@@ -196,7 +202,7 @@ tells us that:
 ## Posterior predictive distribution
 ABayesTest automatically calculates the posterior predictive
 distribution of the data, which is accessible in
-the posterior draws object under the key `y_rep`. 
+the posterior draws object under the key `y_rep`.
 This array is in long form, where group A and B's
 predictions are stacked on top of each other.
 Using the example above, we can inspect this
@@ -233,7 +239,7 @@ Bernoulli, binomial, and Poisson distributions.
 
 For non-normal likelihood functions, ABayesTest
 calculates the differences in canonical
-parameters on both unconstrained and 
+parameters on both unconstrained and
 original scales.
 The table below illustrates how each
 likelihood distribution is parameterised,
@@ -245,7 +251,7 @@ original-scale parameters, for reference.
 | Distribution | Parameterization | Link function transforms                       |
 | ------------ | ---------------- | ---------------------------------------------- |
 | normal       | mean, sd    | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)`   |
-| lognormal    | log-scale mean, log-scale sd | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)` | 
+| lognormal    | log-scale mean, log-scale sd | mean := `mu = mu_star`</br> sd := `sigma = exp(sigma_star)` |
 | gamma        | shape, rate     | shape := `mu^2 / sigma^2 = exp(mu_star)^2 / exp(sigma_star)^2`</br>rate := `shape / mu = shape / exp(mu_star)` |
 | Poisson      | rate         | rate := `mu = exp(mu_star)` |
 | Bernoulli    | probability      | probability := `mu = logit^-1(mu_star)` |
@@ -324,8 +330,8 @@ each group, or hierarchical structures,
 are not supported.
 
 ABayesTest also supports running prior
-predictive simulations using the 
-`prior_only` flag passed to the 
+predictive simulations using the
+`prior_only` flag passed to the
 class constructor:
 
 ```python
@@ -333,8 +339,8 @@ rng = np.random.default_rng(SEED)
 N = 100
 mu = [0, 1]
 sigma = [0.2, 1]
-y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0]) 
-y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1]) 
+y1 = rng.normal(size=N, loc=mu[0], scale=sigma[0])
+y2 = rng.normal(size=N, loc=mu[1], scale=sigma[1])
 
 prior = ABayesTest(prior_only=True, seed=SEED)
 prior.fit((y1, y2))
@@ -372,4 +378,3 @@ can be used, if interested, to see the raw Stan code:
 ```python
 ab._render_model()
 ```
-
